@@ -1,3 +1,19 @@
+name: Build and Push Docker Image to Amazon ECR
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "flask2s3/**"
+      - "flask2sqs/**"
+      - ".github/workflows/**"
+  workflow_dispatch: # Allows manual triggering from GitHub UI
+
+permissions:
+  id-token: write   # Required for requesting the JWT from AWS OIDC
+  contents: read    # Required for actions/checkout
+
 jobs:
   deploy:
     name: Build & Push
@@ -23,7 +39,7 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ vars.ECR_REPOSITORY }} # or e.g. ${{ vars.ECR_REPOSITORY }}-${{ matrix.app }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
           IMAGE_TAG: ${{ github.sha }}
           APP_DIR: ${{ matrix.app }}
         run: |
