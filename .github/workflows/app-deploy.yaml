@@ -1,17 +1,10 @@
-name: Build and Push Docker Image to Amazon ECR
-
-on:
-  push:
-    branches: [ "main" ]
-
-permissions:
-  id-token: write   # Required for requesting the JWT from AWS OIDC
-  contents: read    # Required for actions/checkout
-
 jobs:
   deploy:
     name: Build & Push
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [flask2s3, flask2sqs]
 
     steps:
       - name: Checkout repository
@@ -30,9 +23,10 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }} # or e.g. ${{ vars.ECR_REPOSITORY }}-${{ matrix.app }}
           IMAGE_TAG: ${{ github.sha }}
+          APP_DIR: ${{ matrix.app }}
         run: |
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -t $REGISTRY/$REPOSITORY:latest .
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          docker push $REGISTRY/$REPOSITORY:latest
+          docker build -t $REGISTRY/$REPOSITORY:$APP_DIR-$IMAGE_TAG -t $REGISTRY/$REPOSITORY:$APP_DIR-latest ./$APP_DIR
+          docker push $REGISTRY/$REPOSITORY:$APP_DIR-$IMAGE_TAG
+          docker push $REGISTRY/$REPOSITORY:$APP_DIR-latest
